@@ -1,0 +1,7 @@
+Product team — weekly meeting notes
+
+Decisions: The team approved a staged launch. An internal pilot will run before the product is opened to a wider group.
+
+Owners: Priya will update the onboarding flow. Luis will prepare the launch checklist and support guide. Morgan will confirm pilot participants.
+
+Deadlines: The pilot starts May 6. The team will review participant feedback and decide on wider access at the May 13 check-in.

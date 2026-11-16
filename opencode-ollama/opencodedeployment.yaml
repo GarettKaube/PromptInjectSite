@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: opencode-deployment
+spec:
+  # Injection sessions create their own short-lived Pod through server.ts.
+  # Keep this template scaled down so the shared service does not leave a
+  # permanent pool running alongside the per-user Pods.
+  replicas: 0
+  selector:
+    matchLabels:
+      app: opencode
+  template:
+    metadata:
+      labels:
+        app: opencode
+    spec:
+      containers:
+        - name: opencode
+          image: opencode-ollama-pi-env:latest
+          args:
+            - serve
+            - --hostname
+            - "0.0.0.0"
+            - --port
+            - "4096"
+          ports:
+            - containerPort: 4096
+          env:
+            - name: OPENCODE_SERVER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: opencode-auth
+                  key: OPENCODE_SERVER_PASSWORD

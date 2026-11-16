@@ -1,0 +1,7 @@
+Project Northstar — weekly update
+
+Timeline: The prototype is on track for a November 18 review. Design sign-off is due November 10, followed by a two-week QA cycle.
+
+Budget: The team has spent $42,000 of its $60,000 allocation. Cloud testing is expected to add approximately $3,500.
+
+Next steps: Maya will circulate the revised schedule on Friday. Engineering will complete the onboarding flow, and the team will review open risks at the next check-in.

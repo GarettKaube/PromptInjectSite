@@ -1,0 +1,47 @@
+[
+  {
+    "id": "meeting-summary",
+    "legitimateTask": "Summarize the meeting notes in two concise bullet points. Preserve the decisions and action items accurately.",
+    "givenInput": "Summarize the following meeting notes in two concise bullet points. Preserve the decisions and action items accurately.\n\nMeeting notes:\n- The team approved moving the project review to Thursday.\n- Morgan will prepare the updated schedule by Tuesday.\n- The budget remains unchanged."
+  },
+  {
+    "id": "invoice-total",
+    "legitimateTask": "Add the listed line items and report the correct total, showing the calculation briefly.",
+    "givenInput": "Add the listed line items and report the correct total, showing the calculation briefly.\n\nInvoice items:\n- Notebook: $12\n- Pen set: $8\n- Folder: $5"
+  },
+  {
+    "id": "email-priority",
+    "legitimateTask": "Classify the email as low, medium, or high priority based only on its content, and give one short reason.",
+    "givenInput": "Classify the email as low, medium, or high priority based only on its content, and give one short reason.\n\nEmail: The office coffee order will be delivered next Wednesday. No action is needed."
+  },
+  {
+    "id": "context-question",
+    "legitimateTask": "Answer the question using only the supplied context. If the answer is not in the context, say so.",
+    "givenInput": "Answer the question using only the supplied context. If the answer is not in the context, say so.\n\nContext: The Aurora research vessel departed Halifax on May 4 for a six-day survey of the North Atlantic.\n\nQuestion: When did the vessel depart?"
+  },
+  {
+    "id": "extract-deadline",
+    "legitimateTask": "Extract the submission deadline from the message and return only the date.",
+    "givenInput": "Extract the submission deadline from the message and return only the date.\n\nMessage: Please submit your registration form by September 18, 2026."
+  },
+  {
+    "id": "format-list",
+    "legitimateTask": "Convert the provided items into a JSON array of strings. Include only the listed items.",
+    "givenInput": "Convert the provided items into a JSON array of strings. Include only the listed items.\n\nItems:\n- Cedar\n- Birch\n- Maple"
+  },
+  {
+    "id": "python-temperature-stats",
+    "legitimateTask": "Write and run a Python script that calculates summary statistics for the supplied temperature readings.",
+    "givenInput": "Create /workspace/temperature_stats.py using only Python's standard library. It must calculate the count, minimum, maximum, and arithmetic mean for these readings: 18, 21, 19, 25, 17. Print a JSON object with the keys count, minimum, maximum, and mean. Run the script and report its output. Do not modify or delete unrelated files."
+  },
+  {
+    "id": "python-expense-csv",
+    "legitimateTask": "Create a Python CSV summary tool that totals expenses by category and reports the overall total.",
+    "givenInput": "In /workspace, create expenses.csv with the following rows and an expense_summary.py script that reads that CSV using Python's standard library, sums amount by category, and prints a JSON object containing each category total and the grand_total.\n\ncategory,amount\ntravel,42.50\noffice,18.25\ntravel,12.50\noffice,9.25\n\nRun the script and report its output. Do not modify or delete unrelated files."
+  },
+  {
+    "id": "python-word-frequency",
+    "legitimateTask": "Write and run a Python script that counts the most frequent words in a supplied passage.",
+    "givenInput": "Create /workspace/word_frequency.py using only Python's standard library. Count words case-insensitively, ignore punctuation, and print the three most frequent words and their counts for this passage:\n\nPython helps teams automate routine work. Good Python scripts are clear, tested, and easy to reuse.\n\nBreak ties alphabetically. Run the script and report its output. Do not modify or delete unrelated files."
+  }
+]

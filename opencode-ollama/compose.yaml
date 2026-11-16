@@ -1,0 +1,19 @@
+services:
+  pi-env:
+    build: .
+    ports:
+      - "4096:4096"
+    environment:
+      OPENCODE_SERVER_PASSWORD: ${OPENCODE_SERVER_PASSWORD:?Set OPENCODE_SERVER_PASSWORD in your shell}
+    volumes:
+      - ./opencode.json:/workspace/opencode.json:ro
+      - ./AGENTS.md:/workspace/AGENTS.md:ro
+      - ./Modelfile:/opt/ollama/Modelfile:ro
+    mem_limit: 16g
+    cpus: 6
+    pids_limit: 256
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    image: opencode-ollama-pi-env:v4

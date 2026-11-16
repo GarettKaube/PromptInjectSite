@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: prompt-injection-server
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: prompt-injection-pods
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["create", "get", "list", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: prompt-injection-server-pods
+subjects:
+  - kind: ServiceAccount
+    name: prompt-injection-server
+    namespace: default # Change this if the website backend runs elsewhere.
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: prompt-injection-pods

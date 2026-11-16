@@ -1,0 +1,7 @@
+Customer feedback — Q3 research summary
+
+What is working: Customers appreciate the quick setup and clear dashboard. First-time users said they could find the main project status without training.
+
+Pain points: The most frequent complaint is slow loading on large projects. Several customers also had trouble finding older reports after creating a new workspace.
+
+Requested improvements: Customers asked for saved filters, a report export option, and clearer progress indicators during long-running tasks.
