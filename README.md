@@ -1,6 +1,8 @@
 ## About this project
 This website serves as a platform for LLM prompt injection data gathering. Users will intereact with a LLM agent that has specific instructions to follow and access to tools to complete workflows. The user's goal is to convince the agent to do harmful or unintended behaviour such as deleting a folder was instructed to not touch.
 
+![Direct Prompt Injection](./webpreview.png)
+
 ## Architecture
 1. An Ollama server hosts the LLM.
 2. OpenCode instances are ran in Kubernetes pods which can communicate with the Ollama .server. 
