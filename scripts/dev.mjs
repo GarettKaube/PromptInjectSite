@@ -2,6 +2,7 @@ import { spawn } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 
 const root = fileURLToPath(new URL('../', import.meta.url))
+
 const backend = spawn(process.execPath, ['node_modules/tsx/dist/cli.mjs', 'server.ts'], {
   cwd: root,
   env: { ...process.env, PORT: '3001' },

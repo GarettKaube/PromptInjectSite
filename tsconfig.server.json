@@ -9,5 +9,5 @@
     "rootDir": ".",
     "outDir": "dist-server"
   },
-  "include": ["server.ts"]
+  "include": ["src/backend/server.ts"]
 }

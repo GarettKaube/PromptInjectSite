@@ -16,5 +16,5 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src", "vite.config.ts", "src/FindDiff.ts"]
+  "include": ["src/front-end/", "vite.config.ts", "src/front-end/FindDiff.ts"]
 }
