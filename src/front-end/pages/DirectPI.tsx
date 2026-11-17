@@ -5,8 +5,9 @@ import { ToolCallList } from '../ToolCallList'
 import Markdown from 'react-markdown'
 import { useInjectionPodSession } from '../InjectionPodSession'
 import { AgentDirectoryPanel } from '../AgentDirectoryPanel'
-import { Play, Info, RotateCcw, MessageCircleText, 
-  SquarePen, Sparkle, Bot, Moon, Sun } from 'lucide-react';
+import { Play, Info, RotateCcw, MessageCircleText, Check,
+  SquarePen, Sparkle, Bot, Moon, Sun, ChevronDown } from 'lucide-react';
+import * as Select from "@radix-ui/react-select";
 
 type Theme = 'light' | 'dark'
 
@@ -20,6 +21,94 @@ interface DirectTaskPair {
   legitimateTask: string
   givenInput: string
 }
+
+
+function InjectionPosition({ theme }: { theme: Theme }) {
+  const [position, setPosition] = useState("bottom");
+  return (
+      <div className="w-64">
+        <label
+          id="position-label"
+          className="position-select-label"
+        >
+          Select Position
+        </label>
+        <div>
+          <Select.Root value={position} onValueChange={setPosition}>
+            <Select.Trigger
+              aria-labelledby="position-label"
+              className="position-select-box"
+            >
+              <Select.Value placeholder="Choose a position" />
+              <Select.Icon className="position-select-chevron"><ChevronDown size={16}/></Select.Icon>
+            </Select.Trigger>
+
+            <Select.Portal>
+              <Select.Content
+                position="popper"
+                sideOffset={5}
+                className="position-select-box-content"
+                data-theme={theme}
+              >
+                <Select.Viewport>
+                  {[
+                    { value: "bottom", label: "Bottom" },
+                    { value: "middle", label: "Middle" },
+                    { value: "top", label: "Top" }
+                  ].map((item) => (
+                    <Select.Item
+                      key={item.value}
+                      value={item.value}
+                      className="position-select-item"
+                    >
+                      <Select.ItemIndicator className="position-select-indicator"><Check size={14} /></Select.ItemIndicator>
+                      <Select.ItemText>{item.label}</Select.ItemText>
+                    </Select.Item>
+                  ))}
+                </Select.Viewport>
+              </Select.Content>
+            </Select.Portal>
+          </Select.Root>     
+        </div>
+        <div className="hint"><span className="hint-icon"><Info size={14}/></span><span>This is where your injected text will be placed in the original prompt.</span></div>
+      </div>
+      
+  )
+}
+
+function PIInput({ theme }: { theme: Theme }) {
+  const [prompt, setPrompt] = useState('')
+  const lineCount = prompt.split('\n').length
+  return (
+    <section className="panel direct-input-panel">
+            <header className="panel-header">
+              <h2><span className="step-number blue"><SquarePen size={18}/></span>Your injection</h2>
+            </header>
+            <div className="panel-content">
+              
+              <div className="direct-editor-heading">
+                <label className="eyebrow" htmlFor="direct-prompt">injection</label>
+              </div>
+              <div className="direct-editor-wrap">
+                <div className="line-numbers" aria-hidden="true">{Array.from({ length: lineCount }, (_, index) => <span key={index}>{index + 1}</span>)}</div>
+                <textarea
+                  id="direct-prompt"
+                  className="source-editor injection-editor"
+                  spellCheck={false}
+                  onChange={(event: ChangeEvent<HTMLTextAreaElement>) => {
+                    setPrompt(event.target.value)
+                  }}
+                  aria-label="Editable direct model prompt"
+                />
+              </div>
+              <InjectionPosition theme={theme}/>
+            </div>  
+          </section>
+  )
+}
+
+
+
 
 export function DirectPI({ theme, onToggleTheme }: DirectPIProps) {
   const injectionSession = useInjectionPodSession()
@@ -149,6 +238,7 @@ export function DirectPI({ theme, onToggleTheme }: DirectPIProps) {
                   aria-label="Editable direct model prompt"
                 />
               </div>
+              <PIInput theme={theme}/>
               <div className="editor-footer"><span>{lineCount} LINES</span><span>{prompt.length} CHARS</span></div>
               <div className="editor-actions">
                 <button className="reset-button" onClick={resetPrompt} disabled={!selectedPair}><RotateCcw size={14}/> Reset input</button>

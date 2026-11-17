@@ -1,7 +1,7 @@
 import { createReadStream, existsSync, readFileSync, statSync } from 'node:fs'
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http'
 
-import { basename, extname, join, resolve, sep } from 'node:path'
+import path, { basename, extname, join, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 
@@ -79,6 +79,9 @@ const server = createServer((request: IncomingMessage, response: ServerResponse)
   if (pathname === '/api/injection/session/directory') {
     void getInjectionDirectory(request, response)
     return
+  }
+  if (pathname === "/api/insertdb") {
+    
   }
     
   if (pathname.startsWith('/api/')) return sendJson(response, 404, { error: 'API route not found.' })
