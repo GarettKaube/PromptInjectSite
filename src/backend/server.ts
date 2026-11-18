@@ -13,11 +13,14 @@ import { invokeOpenCode,  getInjectionDirectory} from './opencode'
 
 
 const scriptDirectory = fileURLToPath(new URL('.', import.meta.url))
-const root = basename(scriptDirectory) === 'dist-server' ? resolve(scriptDirectory, '..') : scriptDirectory
+
+const srcDirectory = resolve(scriptDirectory, '..')
+const root =  resolve(srcDirectory, '..') 
 const distDirectory = resolve(root, 'dist')
 
 
 const environmentFile = resolve(root, '.env')
+
 
 function loadLocalEnvironment() {
   if (!existsSync(environmentFile)) return

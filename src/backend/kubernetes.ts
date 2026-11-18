@@ -30,6 +30,7 @@ const scriptDirectory = fileURLToPath(new URL('.', import.meta.url))
 const root = basename(scriptDirectory) === 'dist-server' ? resolve(scriptDirectory, '..') : scriptDirectory
 const environmentFile = resolve(root, '.env')
 
+
 function loadLocalEnvironment() {
   if (!existsSync(environmentFile)) return
 
@@ -81,6 +82,7 @@ function kubernetesErrorStatus(error: unknown): number | undefined {
 async function waitForOpenCode(baseUrl: string): Promise<void> {
   const username = process.env.OPENCODE_SERVER_USERNAME || 'opencode'
   const password = process.env.OPENCODE_SERVER_PASSWORD
+  
   const authorization = `Basic ${Buffer.from(`${username}:${password || ''}`).toString('base64')}`
   const deadline = Date.now() + Number(process.env.OPENCODE_HEALTH_TIMEOUT_MS || 90_000)
 
