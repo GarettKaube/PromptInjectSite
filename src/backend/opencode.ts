@@ -13,6 +13,23 @@ const distDirectory = resolve(root, 'dist')
 const environmentFile = resolve(root, '.env')
 const REQUEST_TIMEOUT_MS = 240_000
 
+
+
+function loadLocalEnvironment() {
+  if (!existsSync(environmentFile)) return
+
+  for (const line of readFileSync(environmentFile, 'utf8').split(/\r?\n/)) {
+    const entry = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*?)\s*$/)
+    if (!entry || entry[1] in process.env) continue
+
+    const value = entry[2].replace(/^(['"])(.*)\1$/, '$2')
+    process.env[entry[1]] = value
+  }
+}
+
+loadLocalEnvironment()
+
+
 interface MessagePart {
   type?: string
   id?: string

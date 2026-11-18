@@ -35,3 +35,4 @@ export function isRecord(value: unknown): value is Record<string, unknown> {
 export function apiUrl(baseUrl: string, path: string): URL {
   return new URL(`/api/${path.replace(/^\/+/, '')}`, baseUrl)
 }
+

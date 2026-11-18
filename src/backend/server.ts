@@ -17,6 +17,22 @@ const root = basename(scriptDirectory) === 'dist-server' ? resolve(scriptDirecto
 const distDirectory = resolve(root, 'dist')
 
 
+const environmentFile = resolve(root, '.env')
+
+function loadLocalEnvironment() {
+  if (!existsSync(environmentFile)) return
+
+  for (const line of readFileSync(environmentFile, 'utf8').split(/\r?\n/)) {
+    const entry = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*?)\s*$/)
+    if (!entry || entry[1] in process.env) continue
+
+    const value = entry[2].replace(/^(['"])(.*)\1$/, '$2')
+    process.env[entry[1]] = value
+  }
+}
+
+loadLocalEnvironment()
+
 const mimeTypes: Record<string, string> = {
   '.css': 'text/css; charset=utf-8',
   '.html': 'text/html; charset=utf-8',

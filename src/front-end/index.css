@@ -49,11 +49,27 @@ a {
 }
 
 .topbar {
-  height: 72px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  isolation: isolate;
+  height: 64px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+.topbar::before {
+  position: absolute;
+  z-index: -1;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 100vw;
+  transform: translateX(-50%);
+  background: #10131b;
   border-bottom: 1px solid #535970;
+  content: "";
 }
 
 .brand {
@@ -1072,6 +1088,11 @@ a {
   border-color: #dce2d8;
 }
 
+.app-root[data-theme="light"] .topbar::before {
+  background: #f7f7f8;
+  border-color: #dce2d8;
+}
+
 .app-root[data-theme="light"] .brand {
   color: #202820;
 }
@@ -1360,7 +1381,7 @@ a {
 
 @media (max-width:700px) {
   .topbar {
-    height: 62px;
+    height: 58px;
   }
   .main-nav {
     display: none;
@@ -1429,6 +1450,11 @@ a {
 }
 
 .app-root[data-theme="light"] .topbar {
+  border-color: #e4e8df;
+}
+
+.app-root[data-theme="light"] .topbar::before {
+  background: #f7f7f8;
   border-color: #e4e8df;
 }
 
@@ -1960,7 +1986,7 @@ a {
 @media (max-width:700px) {
   .app-root[data-theme="light"] .topbar {
     height: auto;
-    min-height: 68px;
+    min-height: 60px;
   }
   .app-root[data-theme="light"] .intro {
     padding: 34px 0 24px;
@@ -2401,7 +2427,7 @@ a {
 @media (max-width: 700px) {
   .topbar {
     height: auto;
-    min-height: 68px;
+    min-height: 60px;
     gap: 8px;
     padding-block: 10px;
   }
@@ -2426,8 +2452,8 @@ a {
 
 /* Keep the Home header and About position identical across themes. */
 .home-page .topbar {
-  height: 72px;
-  flex: 0 0 72px;
+  height: 64px;
+  flex: 0 0 64px;
 }
 
 .home-page > .site-shell > .about-panel {
@@ -2735,7 +2761,7 @@ button.agent-directory-entry:hover {
 
   .home-page .topbar {
     height: auto;
-    min-height: 68px;
+    min-height: 60px;
     flex: 0 0 auto;
   }
 }
