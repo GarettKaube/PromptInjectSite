@@ -1,24 +1,10 @@
+import type { DirectPIDataRecord } from '../backend/postgres.ts'
 
 
-type DirectPIDataRecord = {
-    sessionid: string, 
-    time: Date,
-    task: string,
-    uned_prompt: string,
-
-    // the injected prompt. 
-    // Can be multiple strings at multiple locations in the text
-    inj_prompt: string[], 
-
-    // Must keep track of where the injected text is placed
-    inj_position: string,
-    model: string, // What model was prompted
-    model_output?: string,
-    model_tool_calls?: string
-}
 
 
-async function sendPostgres(taskAttempt: DirectPIDataRecord): Promise<void> {    
+export async function sendPostgres(taskAttempt: DirectPIDataRecord): Promise<void> { 
+    console.log(JSON.stringify(taskAttempt))   
     const response = await fetch('/api/insertdb', {
         'method': 'POST',
         'headers': {'Content-Type': 'application/json'},

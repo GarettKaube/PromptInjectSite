@@ -8,6 +8,8 @@ import { AgentDirectoryPanel } from '../AgentDirectoryPanel'
 import { Play, Info, RotateCcw, MessageCircleText, Check,
   SquarePen, Sparkle, Bot, Moon, Sun, ChevronDown } from 'lucide-react';
 import * as Select from "@radix-ui/react-select";
+import { sendPostgres } from '../SendPostgres.ts'
+import type { DirectPIDataRecord } from '../../backend/postgres.ts'
 
 type Theme = 'light' | 'dark'
 
@@ -22,9 +24,15 @@ interface DirectTaskPair {
   givenInput: string
 }
 
+type InjectionPosition = "top" | "middle" | "bottom";
+type InjectionPositionProp = {
+  position: string;
+  setPosition: (position: string) => void;
+  theme: Theme;
+}
 
-function InjectionPosition({ theme }: { theme: Theme }) {
-  const [position, setPosition] = useState("bottom");
+function InjectionPosition({ position, setPosition, theme }: InjectionPositionProp) {
+  
   return (
       <div className="w-64">
         <label
@@ -76,38 +84,6 @@ function InjectionPosition({ theme }: { theme: Theme }) {
   )
 }
 
-function PIInput({ theme }: { theme: Theme }) {
-  const [prompt, setPrompt] = useState('')
-  const lineCount = prompt.split('\n').length
-  return (
-    <section className="panel direct-input-panel">
-            <header className="panel-header">
-              <h2><span className="step-number blue"><SquarePen size={18}/></span>Your injection</h2>
-            </header>
-            <div className="panel-content">
-              
-              <div className="direct-editor-heading">
-                <label className="eyebrow" htmlFor="direct-prompt">injection</label>
-              </div>
-              <div className="direct-editor-wrap">
-                <div className="line-numbers" aria-hidden="true">{Array.from({ length: lineCount }, (_, index) => <span key={index}>{index + 1}</span>)}</div>
-                <textarea
-                  id="direct-prompt"
-                  className="source-editor injection-editor"
-                  spellCheck={false}
-                  onChange={(event: ChangeEvent<HTMLTextAreaElement>) => {
-                    setPrompt(event.target.value)
-                  }}
-                  aria-label="Editable direct model prompt"
-                />
-              </div>
-              <InjectionPosition theme={theme}/>
-            </div>  
-          </section>
-  )
-}
-
-
 
 
 export function DirectPI({ theme, onToggleTheme }: DirectPIProps) {
@@ -115,11 +91,16 @@ export function DirectPI({ theme, onToggleTheme }: DirectPIProps) {
   const [taskPairs, setTaskPairs] = useState<DirectTaskPair[]>([])
   const [selectedPair, setSelectedPair] = useState<DirectTaskPair | null>(null)
   const [prompt, setPrompt] = useState('')
+  const [injection, setInjection] = useState('')
   const [loadError, setLoadError] = useState(false)
   const [result, setResult] = useState<InvokeResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isRunning, setIsRunning] = useState(false)
   const [runningSyb, setrunningSyb] = useState(<Sparkle size={18}/>)
+
+  const [position, setPosition] = useState("bottom");
+
+  const [completeprompt, setCompletePrompt] = useState(prompt)
 
   useEffect(() => {
     let active = true
@@ -133,6 +114,7 @@ export function DirectPI({ theme, onToggleTheme }: DirectPIProps) {
         if (active) {
           setTaskPairs(entries)
           setSelectedPair(randomPair)
+          setCompletePrompt(randomPair.givenInput)
           setPrompt(randomPair.givenInput)
         }
       } catch (requestError) {
@@ -146,7 +128,7 @@ export function DirectPI({ theme, onToggleTheme }: DirectPIProps) {
     return () => { active = false }
   }, [])
 
-  async function runModel() {
+  async function runModel(complete_prompt: string): Promise<InvokeResponse | undefined > {
     if (!injectionSession.id || !injectionSession.ready) {
       setError(injectionSession.error || 'Your private model pod is still starting. Please wait a moment.')
       return
@@ -155,7 +137,9 @@ export function DirectPI({ theme, onToggleTheme }: DirectPIProps) {
     setError(null)
     setResult(null)
     try {
-      setResult(await invokeRequest(prompt, injectionSession.id))
+      const result = await invokeRequest(complete_prompt, injectionSession.id)
+      setResult(result)
+      return result
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : 'The model request failed.')
     } finally {
@@ -163,10 +147,57 @@ export function DirectPI({ theme, onToggleTheme }: DirectPIProps) {
     }
   }
 
+  async function runAndSave() {
+    const promptToRun = concatInjTextPrompt(injection)
+      setCompletePrompt(promptToRun)
+      setrunningSyb(<Bot />)
+
+      try {
+        const response = await runModel(promptToRun)
+        if (response) {
+          await sendtoDB(promptToRun, response)
+        }
+        
+      } catch (error) {
+        setError(error instanceof Error ? error.message : 'Failed to place in DB.')
+      }
+  }
+
+
+  async function sendtoDB(prompt_to_run: string, result: InvokeResponse) {
+    if (result && selectedPair && prompt_to_run) {
+      const record: DirectPIDataRecord = {
+        sessionid: result.sessionId,
+        time: new Date(),
+        task: selectedPair.legitimateTask,
+        uned_prompt: prompt,
+
+        inj_prompt: [injection],
+        complete_prompt: prompt_to_run,
+
+        inj_position_str: [position],
+
+        model: "qwen3:8b",
+        model_output: result.text,
+        model_tool_calls: result.toolCalls
+      };
+      try {
+        await sendPostgres(record)
+      }
+      catch (requestError) {
+        setError(requestError instanceof Error ? requestError.message : 'Failed to place in DB.')
+      }
+    }
+  }
+
   function resetPrompt() {
-    if (selectedPair) setPrompt(selectedPair.givenInput)
+    if (selectedPair) {
+      setPrompt(selectedPair.givenInput)
+      setCompletePrompt(selectedPair.givenInput)
+    }
     setResult(null)
     setError(null)
+    setInjection('')
   }
 
   function sampleNewTask() {
@@ -176,13 +207,40 @@ export function DirectPI({ theme, onToggleTheme }: DirectPIProps) {
     const nextPair = choices[Math.floor(Math.random() * choices.length)]
     setSelectedPair(nextPair)
     setPrompt(nextPair.givenInput)
+    setCompletePrompt(nextPair.givenInput)
+    setResult(null)
+    setError(null)
+    setInjection("")
+  }
+
+  function concatInjTextPrompt(inj: string, placement = position) {
+    
+    let res = ''
+    if (placement === "bottom") {
+      res = prompt.concat(inj)
+    }
+    if (placement === "top") {
+      res = inj.concat(prompt)
+    }
+    if (placement === "middle") {
+      const lines = prompt.split('\n')
+      const midpoint = Math.ceil(lines.length / 2)
+      res = [...lines.slice(0, midpoint), inj, ...lines.slice(midpoint)].join('\n')
+    }
+    return res
+  }
+
+  function changePosition(nextPosition: string) {
+    setPosition(nextPosition)
+    setCompletePrompt(concatInjTextPrompt(injection, nextPosition))
     setResult(null)
     setError(null)
   }
 
   
 
-  const lineCount = prompt.split('\n').length
+  const previewLineCount = completeprompt.split('\n').length
+  const injectionLineCount = injection.split('\n').length
 
   return (
     <div className="app-root direct-page min-h-screen bg-[#10131b] text-[#eef0f6]" data-theme={theme} id="top">
@@ -224,25 +282,58 @@ export function DirectPI({ theme, onToggleTheme }: DirectPIProps) {
                 <label className="eyebrow" htmlFor="direct-prompt">Given input</label>
               </div>
               <div className="direct-editor-wrap">
-                <div className="line-numbers" aria-hidden="true">{Array.from({ length: lineCount }, (_, index) => <span key={index}>{index + 1}</span>)}</div>
+                <div className="line-numbers" aria-hidden="true">{Array.from({ length: previewLineCount }, (_, index) => <span key={index}>{index + 1}</span>)}</div>
                 <textarea
                   id="direct-prompt"
                   className="source-editor direct-prompt-editor"
                   spellCheck={false}
-                  value={prompt}
+                  readOnly
+                  value={completeprompt}
                   onChange={(event: ChangeEvent<HTMLTextAreaElement>) => {
-                    setPrompt(event.target.value)
+                    setCompletePrompt(event.target.value)
                     setResult(null)
                     setError(null)
                   }}
                   aria-label="Editable direct model prompt"
                 />
               </div>
-              <PIInput theme={theme}/>
-              <div className="editor-footer"><span>{lineCount} LINES</span><span>{prompt.length} CHARS</span></div>
+              <section className="panel direct-input-panel">
+                <header className="panel-header">
+                  <h2><span className="step-number blue"><SquarePen size={18}/></span>Your injection</h2>
+                </header>
+                <div className="panel-content">
+                  <div>
+                
+                <div className="direct-editor-heading">
+                  <label className="eyebrow" htmlFor="injectionarea">injection</label>
+                </div>
+                <div className="direct-editor-wrap">
+                  <div className="line-numbers" aria-hidden="true">{Array.from({ length: injectionLineCount }, (_, index) => <span key={index}>{index + 1}</span>)}</div>
+                  <textarea
+                    id="injectionarea"
+                    className="source-editor injection-editor"
+                    spellCheck={false}
+                    
+                    value={injection}
+                    onChange={(event: ChangeEvent<HTMLTextAreaElement>) => {
+                      const nextInjection = event.target.value
+                      setInjection(nextInjection)
+                      setCompletePrompt(concatInjTextPrompt(nextInjection))
+                    }}
+                    aria-label="Editable direct model prompt"
+                  />
+                  </div>
+                </div>
+                <InjectionPosition theme={theme} position={position} setPosition={changePosition}/>
+                </div>
+              </section>
+              <div className="editor-footer"><span>{previewLineCount} LINES</span><span>{completeprompt.length} CHARS</span></div>
               <div className="editor-actions">
                 <button className="reset-button" onClick={resetPrompt} disabled={!selectedPair}><RotateCcw size={14}/> Reset input</button>
-                <button className="run-button" onClick={() => {runModel(); setrunningSyb(<Bot/>)}} disabled={isRunning || !selectedPair || !injectionSession.ready}><span><Play size={24} /></span>{isRunning ? 'Sending prompt…' : injectionSession.ready ? 'Send Prompt' : injectionSession.error ? 'Pod failed to start' : 'Starting private pod…'}</button>
+                <button className="run-button" onClick={async () => {
+                    runAndSave();}
+                  } 
+                    disabled={isRunning || !selectedPair || !injectionSession.ready}><span><Play size={24} /></span>{isRunning ? 'Sending prompt…' : injectionSession.ready ? 'Send Prompt' : injectionSession.error ? 'Pod failed to start' : 'Starting private pod…'}</button>
                 {injectionSession.error && <p className="direct-error" role="alert">{injectionSession.error}</p>}
               </div>
             </div>

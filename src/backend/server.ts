@@ -11,6 +11,8 @@ import { startInjectionSession, endInjectionSession,
 
 import { invokeOpenCode,  getInjectionDirectory} from './opencode'
 
+import { writeJSONtoDB, verifyConnection } from './postgres.ts'
+
 
 const scriptDirectory = fileURLToPath(new URL('.', import.meta.url))
 
@@ -35,6 +37,12 @@ function loadLocalEnvironment() {
 }
 
 loadLocalEnvironment()
+
+const password = process.env.DB_PASSWORD;
+
+if (typeof password !== "string" || password.length === 0) {
+    throw new Error("DB_PASSWORD is missing");
+};
 
 const mimeTypes: Record<string, string> = {
   '.css': 'text/css; charset=utf-8',
@@ -100,7 +108,13 @@ const server = createServer((request: IncomingMessage, response: ServerResponse)
     return
   }
   if (pathname === "/api/insertdb") {
-    
+    void writeJSONtoDB(request, response)
+    return
+  }
+
+  if (pathname === "/api/dbhealth") {
+    void verifyConnection(request, response)
+    return
   }
     
   if (pathname.startsWith('/api/')) return sendJson(response, 404, { error: 'API route not found.' })
