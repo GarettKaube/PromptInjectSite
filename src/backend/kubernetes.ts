@@ -446,3 +446,31 @@ export async function sweepInjectionPods(): Promise<void> {
     console.error(`Injection pod cleanup sweep failed: ${(error as Error).message}`)
   }
 }
+
+export async function cleanUpAllPods() {
+  const namespace = getKubernetesNamespace()
+  const coreAPI = getKubernetesApi()
+  
+  const response = await coreAPI.listNamespacedPod( {
+      namespace: namespace
+  })
+
+  for (const pod of response.items) {
+      const podName = pod.metadata?.name
+      if (podName) {
+          try {
+              await coreAPI.deleteNamespacedPod({
+                  name: podName,
+                  namespace: namespace
+              })
+              console.log( `cleaning up: ${podName}`)
+          } catch (error) {
+              console.error(`Failed to delete pd ${podName}:`, error)
+              throw error
+          }
+          
+      }
+      
+      
+  }
+}

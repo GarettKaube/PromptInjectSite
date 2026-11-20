@@ -7,11 +7,11 @@ import { fileURLToPath } from 'node:url'
 
 import { sendJson } from './utils'
 import { startInjectionSession, endInjectionSession, 
-  heartbeatInjectionSession, sweepInjectionPods } from './kubernetes'
+  heartbeatInjectionSession, sweepInjectionPods, cleanUpAllPods } from './kubernetes'
 
 import { invokeOpenCode,  getInjectionDirectory} from './opencode'
 
-import { writeJSONtoDB, verifyConnection } from './postgres.ts'
+import { writeJSONtoDB } from './postgres.ts'
 
 
 const scriptDirectory = fileURLToPath(new URL('.', import.meta.url))
@@ -111,16 +111,12 @@ const server = createServer((request: IncomingMessage, response: ServerResponse)
     void writeJSONtoDB(request, response)
     return
   }
-
-  if (pathname === "/api/dbhealth") {
-    void verifyConnection(request, response)
-    return
-  }
     
   if (pathname.startsWith('/api/')) return sendJson(response, 404, { error: 'API route not found.' })
   serveBuiltApp(request, response)
   
 })
+
 
 const host = process.env.HOST || '127.0.0.1'
 server.listen(port, host, () => {
@@ -129,3 +125,17 @@ server.listen(port, host, () => {
 
 const cleanupTimer = setInterval(() => { void sweepInjectionPods() }, 15_000)
 cleanupTimer.unref()
+
+
+process.on("SIGINT", async () => {
+  try {
+    await cleanUpAllPods()
+    console.log("All pods cleaned up.")
+    process.exit(0)
+  } catch (error) {
+    console.error("Failed to clean pods.")
+    process.exit(1)
+  }
+
+})
+
