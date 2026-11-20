@@ -36,3 +36,21 @@ export function apiUrl(baseUrl: string, path: string): URL {
   return new URL(`/api/${path.replace(/^\/+/, '')}`, baseUrl)
 }
 
+export type ReservationStatus = 'starting' | 'active' | 'deleting'
+
+export interface NewPodReservation {
+  sessionId: string
+  ownerIpHash: string
+  podName?: string
+  status?: ReservationStatus
+}
+
+export interface PodReservation extends NewPodReservation {
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface InsertPodReservation {
+  (reservation: NewPodReservation): Promise<PodReservation>
+}
+

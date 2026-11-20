@@ -15,7 +15,8 @@ kubectl create secret generic opencode-auth \
   --from-literal=OPENCODE_SERVER_PASSWORD='your-password' \
   -n your-namespace
 ```
-Apply the OpenCode service:`opencodeservice.yaml`: `kubectl apply -n <namespace> -f opencodeservice.yaml` 
+
+Apply the OpenCode service:`opencodeservice.yaml`: `kubectl apply -n <namespace> -f opencodeservice.yaml`
 
 Apply `opencodedeployment.yaml` in that namespace. It is kept at zero replicas because the website creates one standalone OpenCode Pod per injection browser session. Command:
 `kubectl apply -n <namespace> -f opencodedeployment.yaml`
@@ -24,3 +25,14 @@ For a website backend deployed inside Kubernetes, apply `injection-pod-rbac.yaml
 
 The session Pods use the same image and password Secret. The website server also needs `OPENCODE_SERVER_PASSWORD` set so it can authenticate to each Pod.
 
+### Network policy:
+
+Set up the network poicly by running:
+
+```bash
+set -a
+source .env
+set +a
+
+envsubst < network-policy.yaml | kubectl apply -f -
+```

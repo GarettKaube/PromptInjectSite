@@ -30,7 +30,7 @@ For running the frontend locally:
 ## Node.js Server
 1. Have node.js installed https://nodejs.org/en/download
 2. Install dependencies: `nmp install`
-3. Run the server: `HOST=0.0.0.0 PORT=3001 npx tsx ./src/backend/server.ts`
+3. Run the server: `HOST=<your-host-ip> PORT=3001 npx tsx ./src/backend/server.ts`
 
 
 ## LightSail and Nginx Setup

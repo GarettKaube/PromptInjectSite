@@ -5,7 +5,10 @@ import { basename, extname, join, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { KubeConfig } from '@kubernetes/client-node'
 import { CoreV1Api, type V1Pod } from '@kubernetes/client-node/dist/gen/index.js'
-import { sendJson, readRequestBody, isRecord, HttpError } from './utils'
+import { sendJson, readRequestBody, isRecord, HttpError, NewPodReservation } from './utils'
+import { insertPodReservation, PodReservation, updatePodReservation, deletePodReservation, getCreatedAt, getNumSessionsByIP } from './postgres'
+import { createHmac } from 'node:crypto'
+import { isIP } from 'node:net'
 
 interface InjectionSession {
   id: string
@@ -44,6 +47,20 @@ function loadLocalEnvironment() {
 }
 
 loadLocalEnvironment()
+
+
+function hashClientIp(ip: string): string {
+  const secret = process.env.IP_HASH_SECRET
+  if (!secret) throw new Error('IP_HASH_SECRET is missing')
+
+  // Normalize IPv4-mapped IPv6 so it hashes the same as plain IPv4.
+  const normalizedIp = ip.replace(/^::ffff:/i, '')
+  if (!isIP(normalizedIp)) throw new Error('Invalid client IP')
+
+  return createHmac('sha256', secret)
+    .update(normalizedIp)
+    .digest('hex')
+}
 
 function getKubernetesApi(): CoreV1Api {
   if (!kubernetesApi) {
@@ -351,19 +368,69 @@ export async function startInjectionSession(request: IncomingMessage, response: 
     return sendJson(response, 405, { error: 'Use POST to start an injection session.' })
   }
   let id: string | undefined
+  let hashed_ip : string | undefined
+
+
   try {
     const payload = await readRequestBody(request)
     id = isRecord(payload) && validSessionId(payload.id) ? payload.id.toLowerCase() : undefined
     
     if (!id) return sendJson(response, 400, { error: 'A valid injection session ID is required.' })
+    const clientIp = request.headers['x-real-ip'] ?? request.socket.remoteAddress
+    
+    if (typeof clientIp !== "string") return sendJson(response, 400, { error: 'client IP is not a string' })
+    
+    hashed_ip = hashClientIp(clientIp)
 
+    const session_ip = {
+      sessionId: id,
+      ownerIpHash: hashed_ip,
+    }
+    // reserve the ip for the session
+    await insertPodReservation(session_ip)
+
+    // number of sessions currently for the IP
+    const num_sessions = await getNumSessionsByIP(session_ip)
+
+    
+    const limit = Number(process.env.IP_SESSION_LIMIT)
+    
+        
+    // prevent users from creating more pods if maximum number of pds for
+    // ip is reached
+    if (num_sessions > limit) {
+      await deletePodReservation(session_ip)
+
+      return sendJson(response, 400, { error: 'Maximum number of sessions reached' })
+    } 
+
+    // attack session to the id
     await attachInjectionSession(id)
+
+    await updatePodReservation( {
+      sessionId: id,
+      ownerIpHash: hashed_ip,
+      podName: sessionPodName(id),
+      status: "active",
+      createdAt: new Date(),
+      updatedAt: new Date()
+    })
+
     return sendJson(response, 200, { id, ready: true })
   } catch (error) {
     const httpError = error as HttpError
     console.error(`Could not start injection session: ${httpError.message}`)
-    if (id) {
-      try { await deleteInjectionSession(id) } catch (cleanupError) {
+    console.error(error)
+    if (id && hashed_ip) {
+      try { 
+        await deleteInjectionSession(id) 
+        
+        await deletePodReservation({
+          sessionId: id,
+          ownerIpHash: hashed_ip,
+        })
+
+      } catch (cleanupError) {
         console.error(`Could not clean up failed injection session ${id}: ${(cleanupError as Error).message}`)
       }
     }
@@ -376,6 +443,8 @@ export async function endInjectionSession(request: IncomingMessage, response: Se
     response.setHeader('Allow', 'POST')
     return sendJson(response, 405, { error: 'Use POST to end an injection session.' })
   }
+  let hashed_ip : string | undefined
+
   try {
     const payload = await readRequestBody(request)
     const id = isRecord(payload) && validSessionId(payload.id) ? payload.id.toLowerCase() : undefined
@@ -384,9 +453,45 @@ export async function endInjectionSession(request: IncomingMessage, response: Se
     // that work to settle so cleanup cannot race ahead of pod creation.
     const pendingStart = injectionSessionStarts.get(id)
     if (pendingStart) await pendingStart.catch(() => undefined)
+    const clientIp = request.headers['x-real-ip'] ?? request.socket.remoteAddress
+    
+    if (typeof clientIp !== "string") return sendJson(response, 400, { error: 'Could not delete pod session from postgres, client IP is not a string' })
+    hashed_ip = hashClientIp(clientIp)
+
+    
+    try {
+      const res = await getCreatedAt({
+        sessionId: id,
+        ownerIpHash: hashed_ip
+      })
+      await updatePodReservation({
+        sessionId: id,
+        ownerIpHash: hashed_ip,
+        podName: sessionPodName(id),
+        status: "deleting",
+        createdAt: res.createdAt,
+        updatedAt: new Date()
+      })
+    } catch (error) {
+      console.error("Failed to update during deleting", error)
+    }
+    
+    const id_to_delete = id
     await deleteInjectionSession(id)
+    
+    try {
+      await deletePodReservation({
+        sessionId: id_to_delete,
+        ownerIpHash: hashed_ip
+    }
+    )
+    } catch (error) {
+      console.error("Failed to delete from pg during deleting")
+    }
+    
     return sendJson(response, 200, { stopped: true })
   } catch (error) {
+    console.error("could not delete pod",error)
     const httpError = error as HttpError
     console.error(`Could not delete injection session: ${httpError.message}`)
     return sendJson(response, httpError.status || 503, { error: 'Could not delete the injection pod.' })
@@ -422,6 +527,10 @@ export async function sweepInjectionPods(): Promise<void> {
     if (now - session.lastSeenAt > idleTimeout) {
       try {
         await deleteInjectionSession(session.id)
+        await deletePodReservation({
+          sessionId: session.id,
+          ownerIpHash: ''
+          })
         console.log(`Removed idle injection pod ${session.podName}`)
       } catch (error) {
         console.error(`Could not remove idle injection pod ${session.podName}: ${(error as Error).message}`)
@@ -468,9 +577,6 @@ export async function cleanUpAllPods() {
               console.error(`Failed to delete pd ${podName}:`, error)
               throw error
           }
-          
-      }
-      
-      
+      } 
   }
 }

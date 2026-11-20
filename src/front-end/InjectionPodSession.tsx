@@ -105,12 +105,19 @@ export function InjectionPodSessionProvider({ children }: { children: ReactNode 
 
     let closeCleanupQueued = false
     const endOnPageClose = () => {
+      
       if (closeCleanupQueued) return
       closeCleanupQueued = true
       const blob = new Blob([JSON.stringify({ id: sessionId })], { type: 'application/json' })
       // sendBeacon is designed for page shutdown, while keepalive fetch provides
       // a second delivery path if the browser queues but never delivers the beacon.
-      navigator.sendBeacon('/api/injection/session/end', blob)
+      try {
+        if (typeof navigator.sendBeacon === 'function') {
+          navigator.sendBeacon('/api/injection/session/end', blob)
+        }
+      } catch (cleanupError) {
+        console.warn('Could not queue the injection session cleanup beacon:', cleanupError)
+      }
       void postSessionAction('/api/injection/session/end', sessionId, true)
         .then((response) => {
           if (!response.ok) throw new Error(`Cleanup request returned ${response.status}.`)
