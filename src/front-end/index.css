@@ -822,7 +822,7 @@ a {
 
 .output-kicker {
   display: flex;
-  justify-content: space-between;
+  gap: 5px;
   font: 10px 'DM Mono', monospace;
   margin-bottom: 10px;
 }
@@ -2603,7 +2603,7 @@ a {
 }
 
 .agent-directory-panel {
-  margin-top: 18px;
+  
   margin-bottom: 18px;
 }
 

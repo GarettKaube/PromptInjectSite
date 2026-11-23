@@ -261,10 +261,9 @@ export function DirectPI({ theme, onToggleTheme }: DirectPIProps) {
         <section className="intro">
           <div>
             <h1>Direct Prompt Injection</h1>
-            <p className="intro-subtitle">Change the prompt itself and see how the model can be redirected to do unintended and/or harmful behaviour. Examples of unintended/harmful behaviour are: model purposely incorrectly do its given task, returning false information, revealing passwords it should not, or deleting a file it should not. </p>
+            <p className="intro-subtitle">Change the prompt itself and see how the model can be redirected to do unintended and/or harmful behaviour. Examples of unintended/harmful behaviour are: model purposely incorrectly completes its given task, returning false information, revealing passwords it should not, or deleting a file it should not. </p>
           </div>
         </section>
-        <AgentDirectoryPanel sessionId={injectionSession.id} ready={injectionSession.ready} />
         <main className="direct-workspace">
           <section className="panel direct-input-panel">
             <header className="panel-header">
@@ -338,36 +337,39 @@ export function DirectPI({ theme, onToggleTheme }: DirectPIProps) {
               </div>
             </div>
           </section>
-
-          <section className="panel direct-output-panel" aria-live="polite">
-            <header className="panel-header">
-              <h2><span className="step-number pink"><MessageCircleText size={18}/></span>Model response</h2>
-            </header>
-            <div className="panel-content">
-              <p className="eyebrow">Output preview</p>
-              <div className="output-box direct-output-box">
-                {error ? (
-                  <div className="direct-error" role="alert">{error}</div>
-                ) : result ? (
-                  <>
-                    <div className="output-kicker success">
-                      ✓ LIVE MODEL RESPONSE
-                    </div>
-                    <div className="direct-answer"><Markdown>{result.text || 'The model returned an empty response.'}</Markdown></div>
-                  </>
-                ) : (
-                  <div className="output-empty"><div><span className="spark">{runningSyb}</span>{isRunning ? 'Waiting for OpenCode…' : 'Edit the prompt, then run the model'}<br />{!isRunning && 'to preview its response.'}</div></div>
-                )}
+          <div>
+            <section><AgentDirectoryPanel sessionId={injectionSession.id} ready={injectionSession.ready} /></section>
+            <section className="panel direct-output-panel" aria-live="polite">
+              <header className="panel-header">
+                <h2><span className="step-number pink"><MessageCircleText size={18}/></span>Model response</h2>
+              </header>
+              <div className="panel-content">
+                <p className="eyebrow">Output preview</p>
+                <div className="output-box direct-output-box">
+                  {error ? (
+                    <div className="direct-error" role="alert">{error}</div>
+                  ) : result ? (
+                    <>
+                      <div className="output-kicker success">
+                        <Check size={14}/>MODEL RESPONSE
+                      </div>
+                      <div className="direct-answer"><Markdown>{result.text || 'The model returned an empty response.'}</Markdown></div>
+                    </>
+                  ) : (
+                    <div className="output-empty"><div><span className="spark">{runningSyb}</span>{isRunning ? 'Waiting for OpenCode…' : 'Edit the prompt, then run the model'}<br />{!isRunning && 'to preview its response.'}</div></div>
+                  )}
+                </div>
+                {result && <ToolCallList calls={result.toolCalls} />}
+                <div className="rule response-rule" />
+                
+                <div className="score-box"><span>MODEL RUN</span><strong>{result ? 'COMPLETE' : error ? 'FAILED' : isRunning ? 'RUNNING' : '—'}</strong></div>
+                
+                {result && <div className="metric"><span>Session</span><b>{result.sessionId.slice(0, 8)}…</b></div>}
+          
               </div>
-              {result && <ToolCallList calls={result.toolCalls} />}
-              <div className="rule response-rule" />
-              
-              <div className="score-box"><span>MODEL RUN</span><strong>{result ? 'COMPLETE' : error ? 'FAILED' : isRunning ? 'RUNNING' : '—'}</strong></div>
-              
-              {result && <div className="metric"><span>Session</span><b>{result.sessionId.slice(0, 8)}…</b></div>}
-        
-            </div>
-          </section>
+            </section>
+            
+          </div>
         </main>
         
       </div>
