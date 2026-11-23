@@ -2,7 +2,7 @@ import { Pool } from 'pg'
 import type { ToolCall } from '../front-end/InvokeRequest.ts'
 import { sendJson, readRequestBody, isRecord, type HttpError} from './utils'
 import { type IncomingMessage, type ServerResponse } from 'node:http'
-import { createReadStream, existsSync, readFileSync, statSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { resolve} from 'node:path'
 import { fileURLToPath } from 'node:url'
 

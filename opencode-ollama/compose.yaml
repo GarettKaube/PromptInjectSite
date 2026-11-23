@@ -16,4 +16,4 @@ services:
       - no-new-privileges:true
     cap_drop:
       - ALL
-    image: opencode-ollama-pi-env:v4
+    image: opencode-ollama-pi-env:v6

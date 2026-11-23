@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: opencode
-          image: opencode-ollama-pi-env:latest
+          image: opencode-ollama-pi-env:v6
           args:
             - serve
             - --hostname

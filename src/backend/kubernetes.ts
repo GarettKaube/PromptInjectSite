@@ -5,7 +5,7 @@ import { basename, extname, join, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { KubeConfig } from '@kubernetes/client-node'
 import { CoreV1Api, type V1Pod } from '@kubernetes/client-node/dist/gen/index.js'
-import { sendJson, readRequestBody, isRecord, HttpError, NewPodReservation } from './utils'
+import { sendJson, readRequestBody, isRecord, HttpError, NewPodReservation, apiUrl } from './utils'
 import { insertPodReservation, PodReservation, updatePodReservation, deletePodReservation, getCreatedAt, getNumSessionsByIP } from './postgres'
 import { createHmac } from 'node:crypto'
 import { isIP } from 'node:net'
@@ -304,6 +304,8 @@ async function prepareInjectionSession(id: string): Promise<InjectionSession> {
     const forwarded = await startPortForward(namespace, podName)
     baseUrl = forwarded.baseUrl
     portForward = forwarded.process
+    
+
   } else {
     const podIP = pod.status?.podIP
     if (!podIP) throw Object.assign(new Error('The OpenCode pod is ready but has no pod IP.'), { status: 503 })

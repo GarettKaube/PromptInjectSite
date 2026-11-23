@@ -8,7 +8,7 @@ This website serves as a platform for LLM prompt injection data gathering. Users
 2. OpenCode instances are ran in Kubernetes pods which can communicate with the Ollama .server. 
 3. Pods are spun up when a user enters the direct injection page and destroyed when exiting.
 4. React is used for the frontend while a Node.js server is used for the backend.
-5. (WIP) $<$ Database $>$ will be used for storage.
+5. Postgres will be used for storage.
 
 # Setup
 - Create a .env with the example.env values replaced with your respective values.
