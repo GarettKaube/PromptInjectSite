@@ -17,6 +17,10 @@ CREATE INDEX IF NOT EXISTS injection_pod_reservations_updated_at_idx
 
 SELECT * FROM injection_pod_reservations;
 
- 
+SELECT COUNT(session_id) AS "session_count"
+FROM injection_pod_reservations
+WHERE owner_ip_hash = '8349ghdsfj';  
 
 DELETE FROM injection_pod_reservations;
+
+SELECT * from direct_pi_attempts;

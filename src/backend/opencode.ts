@@ -11,7 +11,7 @@ const scriptDirectory = fileURLToPath(new URL('.', import.meta.url))
 const root = basename(scriptDirectory) === 'dist-server' ? resolve(scriptDirectory, '..') : scriptDirectory
 const distDirectory = resolve(root, 'dist')
 const environmentFile = resolve(root, '.env')
-const REQUEST_TIMEOUT_MS = 240_000
+const REQUEST_TIMEOUT_MS = 600_000
 
 
 
